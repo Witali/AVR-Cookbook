@@ -21,3 +21,15 @@ The reference build uses AVR-GCC 7.3.0, `-Os`, and the standard ATmega328P start
 | Two separate comparisons → CP/CPC | 190 → 188 | 5 → 5 |
 
 The figures are the loadable section sizes from the full test ELF files, including startup code. The first two pairs also change the initialization code for `.data`, which contributes to the Flash difference.
+
+## Check the standalone C recipes
+
+The examples cover a signed dot product, fractional timer periods, and nonempty Flash ranges with an exclusive upper bound. The checks include an empty dot product, signed extrema, a full fractional timer cycle, and a write range that would overflow if computed by addition. [Recipe code](recipes.h) · [Boundary checks](check-recipes.c)
+
+From the cookbook root, build and run the checks with a C compiler and a POSIX shell.
+
+```sh
+mkdir -p build
+cc -std=c99 -Wall -Wextra -Werror examples/check-recipes.c -o build/check-recipes
+./build/check-recipes
+```

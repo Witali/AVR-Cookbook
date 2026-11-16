@@ -24,4 +24,13 @@ Size the FIFO for the worst-case producer delay. Splitting a long refill into sm
 
 When the sample rate does not divide the timer clock, accumulate the fractional remainder and vary the integer intervals accordingly. For example, a desired period of 12.5 timer ticks can alternate between 12 and 13. Measure both long-term drift and individual sample jitter, which also depends on interrupt latency. Check when the timer accepts a compare update and what happens when an update is late.
 
+```c
+struct fractional_period period = {
+    .whole_ticks = 12, .remainder = 1, .denominator = 2, .phase = 0
+};
+uint16_t ticks = period_next_ticks(&period);
+```
+
+Keep the same `period` across ticks. The example compares the phase against `denominator - remainder` before adding the remainder, so it can work near the limit of a 16-bit counter. It returns an interval in timer ticks. Convert it to the compare value for the timer mode in use. [Implementation](../examples/recipes.h)
+
 [Source files and official references](sources.md)

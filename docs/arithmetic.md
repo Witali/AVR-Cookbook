@@ -16,6 +16,12 @@ Keep a C reference and select specialized kernels according to device capabiliti
 
 If the accumulator starts at zero and the input always contains at least one element, initialize it with the first product. This can eliminate the explicit zeroing and first addition. Inspect the linked instructions to see whether the compiler already took this approach. Preserve the original rounding and overflow behavior and handle empty input explicitly where it is allowed.
 
+```c
+int32_t sum = dot_i8(left, right, count);
+```
+
+The example accepts up to 255 signed byte pairs. Products fit in 16 bits and the sum fits in 32 bits. An empty input returns zero without reading either pointer. [Implementation](../examples/recipes.h) · [Run the checks](../examples/README.md)
+
 ## 4. Reuse products for related coefficients
 
 To obtain results for coefficients 7 and −14, double and negate the first product if the intermediates fit and the accumulators retain their original precision. For paired filters, compare both outputs and accumulator states. Preserve the order of sign changes, saturation, and rounding. Measure whether the extra arithmetic and live registers cost less than the second multiply.

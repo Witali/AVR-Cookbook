@@ -12,6 +12,12 @@ Track the code size, the reserved region, and the Flash available to the applica
 
 A 256-byte-aligned boundary can simplify the limit check if the high-byte comparison covers the whole write range. Use the full address for unaligned limits. Test the last allowed block, a write starting at the boundary, a write crossing it, arithmetic overflow, and the space reserved for vectors.
 
+```c
+bool allowed = flash_span_inside(address, length, app_first, boot_start);
+```
+
+The example checks that `address` is inside the allowed range before subtracting it from the exclusive limit. This avoids overflow from computing `address + length`. Use byte units for all arguments and check the full erase span before an erase operation. [Implementation](../examples/recipes.h)
+
 ## 3. Preserve entry conditions and hardware timing windows
 
 Use peripheral reset defaults only when every entry path guarantees them. For example, a direct jump from an application can leave the UART configured differently from its reset state. Document entry through hardware reset, watchdog reset, and any application jump. Check the linked listing against the device datasheet to ensure that WDT, EEPROM, and SPM control sequences stay within their required timing windows.
