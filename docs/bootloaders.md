@@ -1,31 +1,33 @@
-# Загрузчики и протоколы
+# Bootloaders and protocols
 
-## 1. Объединяйте одинаковые хвосты и проходы
+[Русская версия](bootloaders_ru.md)
 
-Исторический optiboot ATmega328P объединил проверку конца команды (`verify_eop`) и положительный ответ у нескольких команд: −4 Б в варианте 368 → 358 Б. В MicroNucleus строгий ATtiny88 объединяет копирование полезной нагрузки ответа и расчёт CRC: −24 Б в отмеченном этапе. Буфер публикуется после подготовки данных и CRC. У всех путей в общий хвост должны совпадать входное состояние, право на публикацию, формат ответа и изменения состояния. Ложная эквивалентность может проявиться только на повторе или reset.
+## 1. Share identical tails and combine passes
 
-## 2. Учитывайте размещение и геометрию программирования
+A historical ATmega328P optiboot build shared the end-of-packet check (`verify_eop`) and success response across several commands. This saved 4 bytes as part of the change from 368 to 358 bytes. The strict ATtiny88 MicroNucleus bootloader combined the response payload copy with the CRC calculation and saved 24 bytes at that stage. It publishes the buffer after the data and CRC are ready. Every path into a shared tail must agree on the entry state, when it can publish, the response format, and the state changes. Test retries and resets, where differences can first appear.
 
-Разделяйте размер полезного кода, зарезервированную область и доступную приложению память. На ATmega328P минимальный аппаратный boot-раздел равен 256 словам, то есть 512 Б: переход 368 → 358 Б внутри той же области не добавляет приложению Flash. На Virtual Boot ATtiny optiboot подбирает целые группы стирания и перелинковывает кандидат под каждый старт. Примеры из интеграционного отчёта: 549/576 Б на ATtiny84/85, 505/512 Б на ATtiny841 и 501/512 Б на ATtiny1634, где числа означают полезный размер/резерв. Это результаты сборок и моделей.
+## 2. Account for placement and Flash geometry
 
-MicroNucleus использовал размещение на границе с нулевым младшим байтом, чтобы упростить проверку предела Flash и сэкономить 4 Б в соответствующем профиле. Сравнение лишь старшего байта годится только с выровненной границей и доказанными условиями всего диапазона записи. Optiboot проверяет оба байта там, где граница не выровнена на 256 Б. Проверяйте последний разрешённый блок, запись прямо на границе, переход через границу, переполнение и резерв под векторы.
+Track the code size, the reserved region, and the Flash available to the application separately. The smallest hardware boot section on ATmega328P is 256 words, or 512 bytes. The application boundary stays at the same address when the boot code goes from 368 to 358 bytes within that section. On ATtiny with Virtual Boot, optiboot tries whole erase groups and relinks for each start address. The integration report gives code size and reservation as 549/576 bytes on ATtiny84/85, 505/512 bytes on ATtiny841, and 501/512 bytes on ATtiny1634. These figures come from builds and models.
 
-## 3. Сохраняйте контракт входа и аппаратные окна
+MicroNucleus aligned the boundary so its low byte was zero. That simplified the Flash limit check and saved 4 bytes in the corresponding profile. Comparing only the high byte requires an aligned boundary and proof that the check covers the entire write range. Optiboot checks both bytes where the boundary is not aligned to 256 bytes. Test the last allowed block, a write starting at the boundary, a write crossing it, arithmetic overflow, and the space reserved for vectors.
 
-Исторический optiboot на ATmega328P уместился в 350 Б, убрав заглушку старого SPM API и полагаясь на сброс UCSR0C в режим 8N1. Вариант с полной настройкой UART занимал 358 Б: модель воспроизводит ошибку, если приложение ранее сменило UART и вошло в короткий вариант прямым переходом. Опишите, вызывается ли код через аппаратный сброс, WDT или из приложения. Не вставляйте инструкции внутрь обязательных окон записи WDT, EEPROM или SPM; проверьте это по связанному листингу и даташиту устройства.
+## 3. Preserve entry conditions and hardware timing windows
 
-## 4. Проверяйте пиковую задержку, прежде чем убирать опрос
+A historical ATmega328P optiboot build fit in 350 bytes after removing a stub for the old SPM API and relying on UCSR0C resetting to 8N1. The build that fully initialized the UART occupied 358 bytes. The model reproduces a failure when an application changes the UART settings and then jumps directly to the smaller build. Document whether entry occurs through hardware reset, the watchdog, or an application jump. Check the linked listing against the device datasheet to ensure that writes to WDT, EEPROM, and SPM stay within their required timing windows.
 
-MicroNucleus оставил опросы USB: их удаление выводило задержку входа в приёмник за проверенную границу в 38 тактов. Отдельные тестовые пакеты всё ещё декодировались. В другом эксперименте CRC16 с таблицей 512 Б использует 11 тактов/байт внутри приёмника; 32-байтная таблица требует 35, 16-байтная — 19, а вариант без таблицы — 23, без учёта настройки страницы и вызова. При доступных 14 регулярных слотах CRC более компактные варианты не стали заменой приёмнику. Это замеры прототипов, без сборки и проверки полного нового USB-образа.
+## 4. Check worst-case latency before removing polls
 
-## 5. Сокращайте дублирующие проверки через состояние владельца
+MicroNucleus kept the USB polling points because removing them pushed receiver entry latency beyond the tested bound of 38 cycles. Some test packets still decoded. In a separate CRC16 experiment, the receiver used 11 cycles per byte with a 512-byte table. Outside the receiver, a 32-byte table needed 35 cycles per byte, a 16-byte table needed 19, and the table-free variant needed 23, excluding page setup and call overhead. The receive loop had 14 regular cycle slots available for CRC work, so it kept the larger table. The alternatives were measured as prototypes without building and testing a complete new USB image.
 
-В Flash-only эксперименте MicroNucleus только принятый полноценный SETUP устанавливает состояние владельца. Ветка IN затем использует подготовленный снимок ответа без повторения устаревших проверок. Патч сэкономил 26 Б в конкретном эксперименте; проблема квалификации приёма оставалась открытой. Проверяйте передачу владения при повторе, отмене, malformed-пакете, reset, минимальном зазоре и раннем чтении.
+## 5. Use explicit ownership to eliminate repeated checks
 
-## 6. Оставляйте защитные проверки при оптимизации
+In the Flash-only MicroNucleus experiment, only an accepted, complete SETUP packet establishes ownership. The IN path then uses the prepared response snapshot and can omit the repeated checks of old state. The patch saved 26 bytes in that experiment. Receive qualification was still open. Test ownership through retries, cancellation, malformed packets, resets, minimum inter-packet gaps, and early reads.
 
-Архивный MicroNucleus на 1024 Б мог начать SPM до завершения status ACK. Его отвергли, хотя он попадал в цель по размеру. Для связанных изменений прогоните не только валидные команды: проверьте тайм-аут, повреждённый пакет, повтор последней команды, отсутствие записи при ошибке и первые транзакции после reset. Отдельно проверяйте сохранность рабочей области и запуск приложения.
+## 6. Keep safety checks during optimization
 
-Свидетельства с платы привязаны к образу. Для optiboot задокументированы Middle/Full на ATmega328PB Nano; это не физическая проверка ATtiny Virtual Boot. В строгой EEPROM-совместимой линии MicroNucleus предыдущий образ 1274 Б проверен по USB на плате; 1262 Б имеет модельное свидетельство. Flash-only эксперименты — отдельная ветка.
+An archived 1,024-byte MicroNucleus image could start SPM before the status ACK finished. The project rejected the image even though it met the size target. When changing this code, test timeouts, malformed packets, retries of the last command, writes suppressed after an error, and the first transactions after reset. Check separately that the application region keeps its contents and that the application starts.
 
-[Файлы и официальные справочники](sources.md)
+Board verification applies to specific images. The optiboot reports cover Middle and Full on an ATmega328PB Nano. ATtiny Virtual Boot has build and model results. In the strict EEPROM-compatible MicroNucleus line, the earlier 1,274-byte image was verified over USB on a board and the 1,262-byte image was verified in a model. The Flash-only experiments are a separate development line.
+
+[Source files and official references](sources.md)

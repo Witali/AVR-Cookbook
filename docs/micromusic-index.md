@@ -1,42 +1,44 @@
-# Предметный указатель MicroMusic
+# MicroMusic topic index
 
-Здесь собраны более узкие аудиоприёмы, которые трудно перенести без знания формата и точности декодера. Имена в таблицах — файлы исходного справочника MicroMusic под `docs/avr-asm-cookbook/` без расширения `.md`, на [зафиксированной ревизии](sources.md).
+[Русская версия](micromusic-index_ru.md)
 
-Например, из корня MicroMusic:
+These specialized audio techniques depend on the format and the decoder's arithmetic precision. The names in the tables are files from the MicroMusic cookbook under `docs/avr-asm-cookbook/`, with the `.md` extension omitted. [Source revision](sources.md)
+
+Run this example from the MicroMusic repository root.
 
 ```sh
 git show 1fe7048d7b29:docs/avr-asm-cookbook/speex-bounded-divide.md
 ```
 
-## UM88 и малые плееры
+## UM88 and small players
 
-| Что требуется | Исходные заметки |
+| Goal | Source notes |
 | --- | --- |
-| Сократить IRQ и обращения к памяти | `um88-page-fifo`, `um88-flag-neutral-irq`, `um88-platform` |
-| Специализировать аппаратный вывод и управление | `um88-configured-channels`, `um88-control-size` |
-| Убрать таблицу усиления в AVR25 | `um88-table-free-gain` |
-| Подобрать бюджет малой платформы и уровни PWM | `tiny-speech-budget`, `pwm-output-level` |
+| Shorten the ISR and reduce memory accesses | `um88-page-fifo`, `um88-flag-neutral-irq`, `um88-platform` |
+| Specialize hardware output and control code | `um88-configured-channels`, `um88-control-size` |
+| Remove the gain table on AVR25 | `um88-table-free-gain` |
+| Budget for small devices and set PWM levels | `tiny-speech-budget`, `pwm-output-level` |
 
 ## LPX
 
-| Что требуется | Исходные заметки |
+| Goal | Source notes |
 | --- | --- |
-| Выбрать реализацию умножения, оптимизировать малые ядра | `lpx-multiply-selection`, `lpx-avr25`, `lpx-small-kernel-boundaries`, `lpx-avr-size-screen`, `lpx-decode-simplification`, `lpx-fixed-c-realtime` |
-| Уместить потоковый плеер в RAM и Flash | `lpx-sram512`, `lpx-tiny88-budget`, `lpx-producer-budget`, `lpx-universal-tiny88`, `lpx-release-player` |
-| Читать поток и выбрать размещение данных | `lpx-program-flash`, `lpx-external-spi` |
-| Уменьшить число операций с LSF, фазой и периодом | `lpx-lsf-compact`, `lpx-v5-grid-cosine`, `lpx-polynomial-units`, `lpx-pitch-history`, `lpx-period-excitation` |
-| Обработать усиление, короткий поток и обрыв | `lpx-host-gain`, `lpx-scale-repeat`, `lpx-compact-error-guard` |
-| Сопоставить форматы и качество при ограниченном битрейте | `lpx-speech-compact`, `lpx-speech-v4`, `lpx-atmega328p-v9`, `lpx-v9`, `lpx-lowrate-quality`, `lpx-dialogue` |
+| Choose a multiplication implementation and tune small kernels | `lpx-multiply-selection`, `lpx-avr25`, `lpx-small-kernel-boundaries`, `lpx-avr-size-screen`, `lpx-decode-simplification`, `lpx-fixed-c-realtime` |
+| Fit a streaming player in RAM and Flash | `lpx-sram512`, `lpx-tiny88-budget`, `lpx-producer-budget`, `lpx-universal-tiny88`, `lpx-release-player` |
+| Read the stream and choose data placement | `lpx-program-flash`, `lpx-external-spi` |
+| Reduce work on LSFs, phase, and pitch period | `lpx-lsf-compact`, `lpx-v5-grid-cosine`, `lpx-polynomial-units`, `lpx-pitch-history`, `lpx-period-excitation` |
+| Handle gain, short streams, and truncation | `lpx-host-gain`, `lpx-scale-repeat`, `lpx-compact-error-guard` |
+| Compare formats and quality under a bitrate limit | `lpx-speech-compact`, `lpx-speech-v4`, `lpx-atmega328p-v9`, `lpx-v9`, `lpx-lowrate-quality`, `lpx-dialogue` |
 
 ## Speex
 
-| Что требуется | Исходные заметки |
+| Goal | Source notes |
 | --- | --- |
-| Снизить накладные расходы полиномов, фильтрации и MAC | `speex-angle`, `speex-lsp-twin`, `speex-iir-seed`, `speex-iir-groups`, `speex-finite-lpc-response` |
-| Разделить вычисления QMF или использовать общий результат | `speex-qmf-input`, `speex-qmf-common-product`, `speex-qmf-split-accumulators`, `speex-hb-interpolation` |
-| Использовать узкие диапазоны и конечные алфавиты | `speex-bounded-divide`, `speex-lpc-ratio-divide`, `speex-finite-alphabet-fold`, `speex-finite-gain`, `speex-finite-hb-ratio`, `speex-finite-pitch-root`, `speex-bounded-forced-math` |
-| Специализировать предиктор по режиму или состоянию | `speex-zero-prediction`, `speex-one-tap`, `speex-prepared-dispatch`, `speex-forced-history` |
-| Упростить возбуждение, шум и деление среднего | `speex-five-symbol-noise`, `speex-power-two-noise`, `speex-noise-history`, `speex-lcg-products`, `speex-complementary-mean` |
-| Публиковать обработанные данные чаще, читать их по SPI | `speex-lowrate-fusion`, `speex-quarter-refills`, `speex-spi-streaming` |
+| Reduce overhead in polynomial evaluation, filters, and MAC | `speex-angle`, `speex-lsp-twin`, `speex-iir-seed`, `speex-iir-groups`, `speex-finite-lpc-response` |
+| Split QMF computations or reuse their results | `speex-qmf-input`, `speex-qmf-common-product`, `speex-qmf-split-accumulators`, `speex-hb-interpolation` |
+| Exploit narrow ranges and finite alphabets | `speex-bounded-divide`, `speex-lpc-ratio-divide`, `speex-finite-alphabet-fold`, `speex-finite-gain`, `speex-finite-hb-ratio`, `speex-finite-pitch-root`, `speex-bounded-forced-math` |
+| Specialize prediction for the mode or state | `speex-zero-prediction`, `speex-one-tap`, `speex-prepared-dispatch`, `speex-forced-history` |
+| Simplify excitation, noise generation, and division for the mean | `speex-five-symbol-noise`, `speex-power-two-noise`, `speex-noise-history`, `speex-lcg-products`, `speex-complementary-mean` |
+| Publish processed data more often and read it over SPI | `speex-lowrate-fusion`, `speex-quarter-refills`, `speex-spi-streaming` |
 
-Некоторые заметки описывают только изолированный прототип, а некоторые — результаты полного декодера. При переносе сверяйте профиль, источник замера и ограничения в самой заметке.
+The notes cover both isolated prototypes and full decoder results. Before applying a technique, check the profile, the source of the measurements, and the limits given in the note.

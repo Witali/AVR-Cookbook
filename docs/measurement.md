@@ -1,8 +1,10 @@
-# Методика замеров
+# Measurement guide
 
-Зафиксируйте `-mmcu`, частоту, версии компилятора, линкера и заголовков, адрес размещения и возможности сборки. Сравнивайте образы с одним контрактом: смена UART, протокола, набора команд или точности вычислений — отдельное изменение. В optiboot [интеграционные тесты][sources] сравнивают даже BIN из двух инструментальных цепочек; это проверка конкретной матрицы, а не свойство GCC и LLVM вообще.
+[Русская версия](measurement_ru.md)
 
-## Собрать и прочитать связанный ELF
+Record `-mmcu`, the clock frequency, compiler, linker, and header versions, the load address, and the build features. Compare images with the same behavior. Treat changes to the UART, protocol, command set, or arithmetic precision as separate changes. The optiboot integration tests compare BIN files from two toolchains for a specific build matrix. [Source notes](sources.md)
+
+## Build and inspect the linked ELF
 
 ```sh
 avr-gcc -mmcu=atmega328p -Os -ffunction-sections -fdata-sections \
@@ -12,15 +14,13 @@ avr-objdump -h -d firmware.elf > firmware.lst
 avr-nm -S --size-sort firmware.elf
 ```
 
-- Считайте Flash по секциям, которые действительно загружаются в программную память. На типичной классической схеме это код, образ инициализации `.data` и дополнительные секции Flash; `.data` одновременно занимает SRAM. `.bss` и `.noinit` занимают SRAM; EEPROM считайте отдельно. Проверяйте LMA/VMA и адрес последнего байта в map: дыры и выравнивание влияют на размещение даже при уменьшении суммы секций.
-- Сравните `-Os` с другими профилями только на том же приложении. [Optiboot][sources] использует `-Os -fno-split-wide-types -mrelax` в C-сборке; [MicroMusic][sources] применяет `--gc-sections` с отдельными секциями и использует LTO в отдельных сборках. Выигрыш каждого флага измеряйте отдельно. `-mrelax` может укоротить `CALL/JMP` при связывании. Для собственных таблиц и векторов проверьте корни графа ссылок и `KEEP` в скрипте линкера.
-- Считайте худшие такты на инструкциях **из ELF**, включая взятые переходы, пропуск инструкции в одно или два слова, вызовы и прерывания. Отдельно учитывайте ожидание конца текущей инструкции и окна с запрещёнными IRQ.
-- Складывайте статические данные, максимальный стек включая ISR, отступы выравнивания и heap, если он есть. Отчёт `-fstack-usage` полезен для C, но не видит полную вложенность вызовов, произвольный ASM и все сценарии прерывания. Для сложного образа полезна отметка минимального SP в модели.
+- Count Flash sections that actually load into program memory. On a typical classic AVR, these include code, the initialization image for `.data`, and any additional Flash sections. `.data` also occupies SRAM, as do `.bss` and `.noinit`. Count EEPROM separately. Check the LMA and VMA and the last occupied address in the link map. Gaps and alignment can affect placement even when the sum of section sizes falls.
+- Compare `-Os` with other optimization settings on the same application. Optiboot uses `-Os -fno-split-wide-types -mrelax` for its C build. MicroMusic uses `--gc-sections` with separate sections and enables LTO in some builds. Measure the effect of each flag independently. `-mrelax` can shorten `CALL` and `JMP` at link time. For custom tables and vectors, check which sections the linker treats as roots and which the linker script marks with `KEEP`. [Build sources](sources.md)
+- Count worst-case cycles using instructions **from the linked ELF**. Include taken branches, skips over one- and two-word instructions, calls, and interrupts. Account separately for the time to finish the current instruction and for periods with interrupts disabled.
+- Add static data, peak stack usage including ISRs, alignment padding, and any heap usage. The `-fstack-usage` report helps with C. To account for nested calls, handwritten assembly, and interrupt paths in a complex image, observe the minimum stack pointer in the model.
 
-## Проверить, что результат эквивалентен
+## Check equivalent behavior
 
-Сначала подайте граничные входы: ноль, максимум, переход через страницу, знаковые экстремумы, короткий и повреждённый пакет, повтор и reset. Для арифметики сравните с независимой реализацией с широкими промежуточными значениями. Для временных оптимизаций подайте плотную нагрузку и прервите критический код в разных точках. Например, у MicroMusic совпадение PCM между C и ASM может соседствовать с underrun у C; побайтовое совпадение само по себе не проверяет реальное время.
+Start with boundary cases such as zero, the maximum value, page crossings, signed extrema, short and malformed packets, retries, and resets. For arithmetic, compare against an independent implementation with wide intermediates. For timing changes, drive the system under heavy load and interrupt critical code at different points. In MicroMusic, C and assembly can produce identical PCM while the C version still underruns.
 
-Для физического интерфейса измерьте интервалы на выводах и проверьте разные фазы входа. Моделирование правильных битов при ровных 16 МГц не квалифицирует USB по электрическим параметрам. Фиксируйте для каждого замера MCU, конфигурацию, метрику, исходный вариант и тип проверки.
-
-[sources]: sources.md
+For hardware interfaces, measure the intervals at the pins and vary the input phase. USB electrical behavior needs its own measurements beyond simulating correct bits at exactly 16 MHz. For every result, record the MCU, configuration, metric, baseline, and verification method.

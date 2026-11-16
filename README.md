@@ -1,24 +1,26 @@
 # AVR-Cookbook
 
-Практические оптимизации для классических 8-битных AVR по исходникам и замерам MicroMusic, optiboot, MicroNucleus и LPC-sound-codec. В книге описано, что измерять и какие условия проверять при переносе приёма.
+[Русская версия](README_ru.md)
 
-| Если ограничивает… | Начните с… |
+Practical optimizations for classic 8-bit AVR microcontrollers, drawn from the source code and measurements of MicroMusic, optiboot, MicroNucleus, and LPC-sound-codec. Each recipe explains what to measure and which assumptions to check when applying it.
+
+| When you need to… | Start with… |
 | --- | --- |
-| Неясно, что занимает память и время | [Методика замеров](docs/measurement.md): ELF, map, листинг, стек и худший путь |
-| SRAM, Flash или ресурс EEPROM | [Память и конфигурация](docs/memory.md): таблицы во Flash, специализация сборки, кольцевой журнал |
-| Размер или такты нескольких инструкций | [AVR-ассемблер](docs/assembly.md): флаги, регистры, указатели, ветвления и ABI |
-| Задержка IRQ и опустошение FIFO | [Прерывания и потоки](docs/realtime.md): таймеры, FIFO, предзагрузка и пределы задержки |
-| DSP не укладывается в бюджет | [Целочисленная арифметика](docs/arithmetic.md): узкие диапазоны, MAC, общие произведения и вынос вычислений на ПК |
-| Bootloader не помещается | [Загрузчики и протоколы](docs/bootloaders.md): общий код, размещение, контракт входа и тесты гонок |
+| Find where memory and CPU time go | [Measurement guide](docs/measurement.md) for ELF files, link maps, listings, stack usage, and worst-case paths |
+| Save SRAM or Flash, or reduce EEPROM wear | [Memory and configuration](docs/memory.md) for Flash tables, build-time specialization, and circular journals |
+| Save a few instructions or cycles | [AVR assembly](docs/assembly.md) for flags, registers, pointers, branches, and the ABI |
+| Reduce IRQ latency or prevent FIFO underruns | [Interrupts and streaming](docs/realtime.md) for timers, FIFO sizing, prefill, and latency bounds |
+| Fit DSP into the cycle budget | [Integer arithmetic](docs/arithmetic.md) for bounded ranges, MAC, reused products, and offline computation |
+| Fit a bootloader into its Flash region | [Bootloaders and protocols](docs/bootloaders.md) for shared code, placement, entry conditions, and race tests |
 
-[Указатель источников](docs/sources.md) связывает рецепты с файлами проектов и официальными справочниками. [Указатель аудиоприёмов MicroMusic](docs/micromusic-index.md) помогает найти более узкие эксперименты с LPX, Speex и синтезом.
+The source index maps recipes to project files and official references. The MicroMusic index covers more specialized LPX, Speex, and synthesis experiments. [Source index](docs/sources.md) · [MicroMusic audio index](docs/micromusic-index.md)
 
-Проверить три независимых примера на ATmega328P (нужны Python 3.10+, AVR-GCC, AVR-LibC и AVR binutils):
+To run the three comparisons for ATmega328P, install Python 3.10+, AVR-GCC, AVR-LibC, and AVR binutils, then run the measurement script.
 
 ```sh
 python3 examples/measure.py
 ```
 
-Скрипт собирает обе стороны каждого сравнения и оставляет ELF, map и дизассемблирование в `build/measure/`. [Что именно сравнивается](examples/README.md). Примеры не прошивают контроллер.
+The script builds both variants of each example on the host and saves the ELF files, link maps, and disassembly in `build/measure/`. [What the examples compare](examples/README.md)
 
-Цифры в главах относятся к конкретным исходным сборкам. «Сборка» означает проверку образа и размера, «модель» — выполнение инструкций или симуляцию периферии. На плате подтверждены только явно названные образы и условия.
+Measurements apply to the builds described in each chapter. Build verification covers the firmware image and its size. Model verification covers instruction execution or peripheral simulation. Board verification applies to the specific images and conditions documented in the corresponding reports.
