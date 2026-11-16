@@ -4,7 +4,7 @@
 
 ## 1. Keep constant tables and strings in Flash
 
-LPC-sound-codec stores a 257-element signed 16-bit cosine table in `PROGMEM`. The decoder reads individual words with `pgm_read_word`. The table data itself occupies 514 bytes. MicroMusic uses a common read interface for program memory and other storage. Strings can likewise be read from Flash and sent directly to the UART one byte at a time.
+Place constant tables in `PROGMEM` and read elements with the accessor for their width, such as `pgm_read_byte` or `pgm_read_word`. A 257-element table of 16-bit values contains 514 bytes of data. A common read interface can handle program memory and other storage. Read strings from Flash one byte at a time when sending them directly to a UART.
 
 ```c
 #include <avr/pgmspace.h>
@@ -18,7 +18,7 @@ On ATmega328P, select the address space explicitly. A plain dereference of a poi
 
 ## 2. Exclude unused modes at build time
 
-The MicroMusic ATtiny88 mono profile omits right-channel mixing, stereo interpolation, and writes to OCR1A. The optiboot profile selects its command set and UART implementation. MicroNucleus can build a variant with LED support disabled. Make mutually exclusive profiles explicit. When removing a channel or command, compare time and size on the shared features and verify the behavior required of each configuration. The MicroMusic mono test detects even writes that would leave the value in OCR1A unchanged.
+Select variants with build-time options so that unused code can be left out. For example, a mono build can omit right-channel mixing, stereo interpolation, and writes to an unused compare register. Other options can select the UART implementation, command set, or LED support. Compare time and size on shared features and verify each configuration. In the example, inspect the disassembly to check that the mono build has no writes to OCR1AL. [Build comparison](../examples/README.md)
 
 ## 3. Reduce EEPROM writes
 
@@ -26,6 +26,6 @@ Distribute frequent settings updates across a ring of EEPROM slots. On Arduino A
 
 ## 4. Reuse storage according to data lifetime
 
-The strict MicroNucleus USB bootloader reuses persistent state and counters when building responses. Its Flash-only experiment leaves inactive packet buffers uninitialized until they are ready to publish. This can save code or SRAM when readers can see a buffer only after the writer has finished. Initialize everything a reader can already access. Exercise cold starts with randomized RAM and registers, resets, and packets that arrive early. Zero-filled simulator state can hide initialization bugs.
+Reuse storage when the lifetimes of its contents cannot overlap. For example, a packet buffer can be shared between receive and response preparation if ownership changes only after the previous reader has finished. A writer can skip clearing an inactive buffer if it initializes every byte the reader can see before publishing it. Exercise cold starts with randomized RAM and registers, resets, and packets that arrive early. Zero-filled simulator state can hide initialization bugs.
 
 [Source files and official references](sources.md)

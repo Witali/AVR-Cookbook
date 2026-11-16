@@ -2,7 +2,7 @@
 
 [Русская версия](README_ru.md)
 
-Practical optimizations for classic 8-bit AVR microcontrollers, drawn from the source code and measurements of MicroMusic, optiboot, MicroNucleus, and LPC-sound-codec. Each recipe explains what to measure and which assumptions to check when applying it.
+Practical optimizations for classic 8-bit AVR microcontrollers. Each recipe explains when the technique applies, what it costs, and how to verify it on your target.
 
 | When you need to… | Start with… |
 | --- | --- |
@@ -13,7 +13,7 @@ Practical optimizations for classic 8-bit AVR microcontrollers, drawn from the s
 | Fit DSP into the cycle budget | [Integer arithmetic](docs/arithmetic.md) for bounded ranges, MAC, reused products, and offline computation |
 | Fit a bootloader into its Flash region | [Bootloaders and protocols](docs/bootloaders.md) for shared code, placement, entry conditions, and race tests |
 
-The source index maps recipes to project files and official references. The MicroMusic index covers more specialized LPX, Speex, and synthesis experiments. [Source index](docs/sources.md) · [MicroMusic audio index](docs/micromusic-index.md)
+See the official AVR references for device and toolchain details. The DSP index groups techniques for arithmetic, filters, buffering, and playback. [AVR references](docs/sources.md) · [DSP index](docs/dsp-index.md)
 
 To run the three comparisons for ATmega328P, install Python 3.10+, AVR-GCC, AVR-LibC, and AVR binutils, then run the measurement script.
 
@@ -23,7 +23,7 @@ python3 examples/measure.py
 
 The script builds both variants of each example on the host and saves the ELF files, link maps, and disassembly in `build/measure/`. [What the examples compare](examples/README.md)
 
-Measurements apply to the builds described in each chapter. Build verification covers the firmware image and its size. Model verification covers instruction execution or peripheral simulation. Board verification applies to the specific images and conditions documented in the corresponding reports.
+The example sizes and cycle counts apply to the documented ATmega328P builds. Use the measurement guide to evaluate the recipes on other targets. [Measurement guide](docs/measurement.md)
 
 ## Use the examples in another repository
 
