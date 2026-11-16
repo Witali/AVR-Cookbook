@@ -33,4 +33,16 @@ uint16_t ticks = period_next_ticks(&period);
 
 Keep the same `period` across ticks. The example compares the phase against `denominator - remainder` before adding the remainder, so it can work near the limit of a 16-bit counter. It returns an interval in timer ticks. Convert it to the compare value for the timer mode in use. [Implementation](../examples/recipes.h)
 
+## 6. Wrap the FIFO cursor once per aligned block
+
+If the FIFO capacity is a multiple of the block width and the producer starts at a block boundary and advances by whole blocks, each block fits into one contiguous part of the ring. Write it through a pointer and check for wrap once after the block. For a 12-byte ring and four-byte blocks, the valid starting positions are 0, 4, and 8.
+
+Check that there is space for the entire block before writing and publish the new cursor only after all stores. Use separate handling for partial or unaligned writes. Choose a cursor calculation that can represent the end of the ring before wrapping. Check the final block and the first block after wrap, and compare the linked code with per-byte wrapping. [Standalone example](../examples/fifo-block.c) · [Build measurements](../examples/README.md)
+
+## 7. Keep one SPI read open for contiguous data
+
+If the device supports sequential reads, assert chip select, send the command and starting address, and keep reading as the device advances its address. For a read command with a one-byte opcode and three address bytes, reading eight consecutive 32-byte chunks in one transaction clocks 260 bytes. Opening a new transaction for every chunk clocks 288 bytes. Include any dummy transfers required by the device. This is a wire-byte calculation.
+
+Verify that the device allows pauses with chip select asserted. Keep exclusive ownership of SPI and chip select until the transaction ends, including while waiting for a byte or servicing an ISR. Bound waits, deselect on abort, and open a new transaction on a seek. Check address limits and the maximum input or FIFO refill gap under interrupt load. Measure software gaps separately from the data clock time.
+
 [Source files and official references](sources.md)

@@ -34,4 +34,20 @@ In a request-response protocol, grant ownership only after accepting a complete 
 
 If the protocol requires a status ACK before a Flash write, verify that the ACK finishes before starting SPM. Test timeouts, malformed packets, retries of the last command, writes suppressed after an error, and the first transactions after reset. Verify that the application region keeps its contents and that the application starts. On a board, test the exact image and configuration you intend to use.
 
+## 7. Stage Flash writes in the hardware page buffer
+
+On classic AVR devices that allow filling the temporary Flash page buffer before erasing a page, that buffer can replace a page-sized array in SRAM. For a full-page write, first check the aligned byte address, the exact page length, and the bounds of the entire erase region. Receive one word at a time into the temporary buffer. Wait until the complete request passes its framing and integrity checks before issuing an erase or write.
+
+Check the MCU datasheet for both page and erase-group sizes, where self-programming may execute, the required EEPROM and Flash busy checks, and how to discard a partly filled buffer. Test a truncated request followed by a new one so stale words cannot leak into the next write. Preserve bytes outside the update before erasing. If an erase covers several pages, account for every page in the group. Delaying the erase protects the old page from an invalid request up to that point. Power loss between erase and write can still leave it incomplete. [Self-programming sequence](https://onlinedocs.microchip.com/oxy/GUID-0EC909F9-8FB7-46B2-BF4B-05290662B5C3-en-US-12.1.1/GUID-26689607-BFE5-4C1B-91AE-C77DAC6DC8D7.html)
+
+## 8. Derive the packet toggle from an aligned cursor
+
+For a transfer that alternates its packet toggle, the receive cursor can encode the expected toggle when each accepted nonfinal packet advances it by the same power-of-two stride. For an eight-byte stride and a start aligned to 16 bytes, bit 3 of the byte cursor alternates after each accepted full packet.
+
+```c
+uint8_t expected = initial_toggle ^ ((cursor >> 3) & 1u);
+```
+
+Advance the cursor only after validating and accepting a new packet. A duplicate that requires an acknowledgment must leave the cursor unchanged. A permitted short final packet completes the transfer, so its unaligned end cursor is never used to derive the next toggle. If the start is unaligned, use a validated byte offset from that start. Check bounds independently and reset the cursor and initial toggle on restart or cancellation.
+
 [Source files and official references](sources.md)

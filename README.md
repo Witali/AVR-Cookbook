@@ -15,7 +15,7 @@ Practical optimizations for classic 8-bit AVR microcontrollers. Each recipe expl
 
 See the official AVR references for device and toolchain details. The DSP index groups techniques for arithmetic, filters, buffering, and playback. [AVR references](docs/sources.md) · [DSP index](docs/dsp-index.md)
 
-To run the three comparisons for ATmega328P, install Python 3.10+, AVR-GCC, AVR-LibC, and AVR binutils, then run the measurement script.
+To run the seven comparisons for ATmega328P and ATtiny85, install Python 3.10+, AVR-GCC, AVR-LibC, and AVR binutils, then run the measurement script.
 
 ```sh
 python3 examples/measure.py
@@ -23,7 +23,7 @@ python3 examples/measure.py
 
 The script builds both variants of each example on the host and saves the ELF files, link maps, and disassembly in `build/measure/`. [What the examples compare](examples/README.md)
 
-The example sizes and cycle counts apply to the documented ATmega328P builds. Use the measurement guide to evaluate the recipes on other targets. [Measurement guide](docs/measurement.md)
+The example sizes and cycle counts apply to the documented builds. Use the measurement guide to evaluate the recipes on other targets. [Measurement guide](docs/measurement.md)
 
 ## Use the examples in another repository
 

@@ -38,4 +38,32 @@ A shared routine can save Flash at several call sites, while inlining a single c
 
 If a stream already has fields for gain or filter parameters, have an offline encoder choose those values. The AVR can use the existing per-sample path. Compare stream size, output quality from the **actual fixed-point decoder**, and FIFO headroom.
 
+## 8. Blend complementary weights with one product
+
+When the weights sum to the fixed-point scale `S = 2^Q`, an integer blend with floor rounding can use one product.
+
+```text
+floor((a * old + b * input + bias) / S)
+    = old + floor((b * (input - old) + bias) / S)
+```
+
+Keep the same bias and rounding for negative values. Prove the signed difference fits before narrowing it. The difference of arbitrary 16-bit inputs can require 17 bits. The example limits both inputs to −16,000 through 16,000, so the difference fits signed 16 bits. Check that both biased numerators fit the intermediate type. Compare both ends of the range and half-way cases against a wider reference. [Source](../examples/blend.c) · [Build and measure](../examples/README.md)
+
+## 9. Precompute a transform over a finite alphabet
+
+If many samples repeat a small set of input symbols and the transform is fixed within a block, compute the transformed value for each symbol once, then expand the block by lookup. Preserve the original order of rounding, narrowing, and clipping. Keep any predictor, phase, or parity work that depends on sample position in the per-sample path.
+
+Use a Flash table when the complete mapping is fixed at build time. Use a small SRAM table when an actual block parameter changes the mapping, and rebuild it when that parameter changes. Compare the table setup and lookup cost with the original per-sample calculation. Count table storage, alignment, and stack use, including the worst case for short blocks.
+
+## 10. Extract packed fields from one refill window
+
+For an LSB-first stream with fields 1–8 bits wide, keep the unread bits in the low positions of a byte. If fewer bits remain than the field width, append one byte above the pending bits in a `uint16_t` window. The low `width` bits are the field. Shift the window right by `width` to retain the remaining bits. This lets both paths share the extraction mask and the cursor update.
+
+```c
+const uint8_t field = (uint8_t)(window & ((1u << width) - 1u));
+const uint8_t next_cache = (uint8_t)(window >> width);
+```
+
+Keep unused cache bits zero and publish the new cache, bit count, and byte position only after any required refill succeeds. Test widths 1 and 8, results with and without refill, and EOF at every possible remaining bit count.
+
 [Official references](sources.md) · [DSP index](dsp-index.md)

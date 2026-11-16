@@ -40,4 +40,27 @@ Under the classic AVR-GCC ABI, `MUL` writes to `r1:r0`. Restore zero in r1 befor
 
 In an internal chain of multiplies, defer redundant clears of r1 when no intervening instruction needs it to be zero. Restore r1 before the next consumer of zero and at the C boundary. Exercise interrupts at points where r1 is nonzero and verify that the ISR restores the interrupted value.
 
+## 7. Skip a single instruction for a Boolean selector
+
+When a selector has already been validated to be 0 or 1, use `SBRC` to keep the fallback or execute a single alternate assignment. In this example the AVR-GCC ABI puts the fallback and result in r24 and the selector in r22.
+
+```asm
+sbrc r22, 0
+ldi  r24, 0xb6
+```
+
+On ATmega328P, skipping the one-word `LDI` takes two cycles. Executing it also takes two cycles in total, one for `SBRC` and one for `LDI`. Both instructions preserve SREG, whereas a `TST` followed by a branch changes arithmetic flags. If the input is allowed to be any nonzero byte, testing only bit 0 would give the wrong result for even inputs. Confirm the width of the skipped instruction and check that later code does not rely on flags set by the old sequence. [Assembly example](../examples/select-constant.S) · [Run the comparison](../examples/README.md)
+
+## 8. Turn an unsigned borrow into a byte mask
+
+After an unsigned comparison, carry is set if the subtraction would borrow. Subtract a scratch register from itself with carry to turn that bit into a mask.
+
+```asm
+; Unsigned operands in r24 and r22. Mask output in scratch register r18.
+cp  r24, r22
+sbc r18, r18
+```
+
+The mask is `0xff` when r24 is less than r22, or `0x00` otherwise, regardless of the old value of r18. For a wider value, complete the low-byte `CP` and upper-byte `CPC` chain before making the mask. `SBC` overwrites the scratch register and updates SREG. Consume any other comparison flags before constructing the mask.
+
 [Source files and official references](sources.md)
