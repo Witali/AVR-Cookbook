@@ -24,3 +24,20 @@ python3 examples/measure.py
 The script builds both variants of each example on the host and saves the ELF files, link maps, and disassembly in `build/measure/`. [What the examples compare](examples/README.md)
 
 Measurements apply to the builds described in each chapter. Build verification covers the firmware image and its size. Model verification covers instruction execution or peripheral simulation. Board verification applies to the specific images and conditions documented in the corresponding reports.
+
+## Use the examples in another repository
+
+From the root of your Git repository, start with a clean working tree and choose an unused path for the cookbook. Run the first command once to add the subtree, then run the second whenever you want to bring in updates.
+
+```sh
+git subtree add --prefix third_party/AVR-Cookbook https://github.com/Witali/AVR-Cookbook.git main --squash
+git subtree pull --prefix third_party/AVR-Cookbook https://github.com/Witali/AVR-Cookbook.git main --squash
+```
+
+The examples are copied into your repository alongside the cookbook. To rerun the comparisons from your repository root, run `python3 third_party/AVR-Cookbook/examples/measure.py`. Keep the same prefix and `--squash` option when pulling updates. [Git subtree reference](https://github.com/git/git/blob/master/contrib/subtree/git-subtree.adoc)
+
+To share an improvement, fork AVR-Cookbook, change the relevant example under `examples/`, and open a pull request. Describe the AVR target, the change, and how you checked it. Update both language versions if the documented behavior or measurements change.
+
+## License
+
+The documentation and examples are available under the MIT License. Keep the copyright and license notice when distributing copies or substantial portions. [LICENSE](LICENSE)
